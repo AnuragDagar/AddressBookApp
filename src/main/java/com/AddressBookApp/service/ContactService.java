@@ -1,49 +1,53 @@
 package com.AddressBookApp.service;
 
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.AddressBookApp.dto.ContactDTO;
 import com.AddressBookApp.model.Contact;
-import org.springframework.stereotype.Service;
+import com.AddressBookApp.repository.ContactRepository;
+import org.springframework.context.ApplicationContext;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Slf4j
+@SpringBootApplication
 public class ContactService {
 
-    // In-memory storage for contacts
-    private List<Contact> contactList = new ArrayList<>();
+    ContactRepository contactRepository;
 
-    public List<Contact> getAllContacts() {
-        return contactList;
+    public List<Contact> getAllEntries() {
+        return contactRepository.findAll();
     }
 
-    public Optional<Contact> getContactById(Long id) {
-        return contactList.stream().filter(contact -> contact.getId().equals(id)).findFirst();
+    public Contact getEntryById(Long id) {
+        return contactRepository.findById(id).orElse(null);
     }
 
-    public Contact createContact(Contact contact) {
-        contactList.add(contact);
-        return contact;
+    public Contact createAddressBookEntry(ContactDTO dto) {
+        Contact contact = new Contact();
+        contact.setName(dto.getName());
+        contact.setEmail(dto.getEmail());
+        contact.setPhoneNumber(dto.getPhoneNumber());
+        return contactRepository.save(contact);
     }
 
-    public Optional<Contact> updateContact(Long id, Contact contact) {
-        Optional<Contact> existingContact = getContactById(id);
+    public Contact updateEntry(Long id, ContactDTO dto) {
+        Optional<Contact> existingContact = contactRepository.findById(id);
         if (existingContact.isPresent()) {
-            contact.setId(id);
-            contactList.remove(existingContact.get());
-            contactList.add(contact);
-            return Optional.of(contact);
+            Contact contact = existingContact.get();
+            contact.setName(dto.getName());
+            contact.setEmail(dto.getEmail());
+            contact.setPhoneNumber(dto.getPhoneNumber());
+            return contactRepository.save(contact);
         }
-        return Optional.empty();
+        return null; // Handle not found case properly in controller
     }
 
-    public boolean deleteContact(Long id) {
-        Optional<Contact> existingContact = getContactById(id);
-        if (existingContact.isPresent()) {
-            contactList.remove(existingContact.get());
-            return true;
+    public void deleteEntry(Long id) {
+        if (contactRepository.existsById(id)) {
+            contactRepository.deleteById(id);
         }
-        return false;
     }
 }
